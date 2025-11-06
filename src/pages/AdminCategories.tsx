@@ -10,6 +10,8 @@ interface Category {
   slug: string;
   description: string | null;
   display_order: number;
+  icon: string | null;
+  color: string | null;
 }
 
 export function AdminCategories() {
@@ -18,7 +20,14 @@ export function AdminCategories() {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', slug: '', description: '', display_order: 0 });
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    display_order: 0,
+    icon: '',
+    color: ''
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -59,19 +68,24 @@ export function AdminCategories() {
       if (editingId) {
         const { error: err } = await supabase
           .from('categories')
-          .update({ ...formData, slug })
+          .update({
+            ...formData,
+            icon: formData.icon || null,
+            color: formData.color || null,
+            slug
+          })
           .eq('id', editingId);
 
         if (err) throw err;
       } else {
         const { error: err } = await supabase
           .from('categories')
-          .insert([{ ...formData, slug }]);
+          .insert([{ ...formData, icon: formData.icon || null, color: formData.color || null, slug }]);
 
         if (err) throw err;
       }
 
-      setFormData({ name: '', slug: '', description: '', display_order: 0 });
+      setFormData({ name: '', slug: '', description: '', display_order: 0, icon: '', color: '' });
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -86,7 +100,9 @@ export function AdminCategories() {
       name: category.name,
       slug: category.slug,
       description: category.description || '',
-      display_order: category.display_order
+      display_order: category.display_order,
+      icon: category.icon || '',
+      color: category.color || ''
     });
     setEditingId(category.id);
     setShowForm(true);
@@ -109,7 +125,7 @@ export function AdminCategories() {
   };
 
   const handleCancel = () => {
-    setFormData({ name: '', slug: '', description: '', display_order: 0 });
+    setFormData({ name: '', slug: '', description: '', display_order: 0, icon: '', color: '' });
     setEditingId(null);
     setShowForm(false);
     setError('');
@@ -190,6 +206,28 @@ export function AdminCategories() {
                   value={formData.display_order}
                   onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ikona</label>
+                <input
+                  type="text"
+                  value={formData.icon}
+                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="np. Calculator"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kolor</label>
+                <input
+                  type="text"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="np. #6366F1"
                 />
               </div>
 
