@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     })();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsAdmin((session?.user?.app_metadata?.role as string) === 'admin');

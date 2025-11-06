@@ -7,7 +7,7 @@ interface InlineMathProps {
 }
 
 export function InlineMath({ latex }: InlineMathProps) {
-  const ref = useRef<span>(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!ref.current) return;
