@@ -5,6 +5,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRelatedArticles } from '../hooks/useArticles';
 import { ContentRenderer } from '../components/ContentRenderer';
 import { Breadcrumbs } from '../components/Breadcrumbs';
+import { PracticeQuiz } from '../components/PracticeQuiz';
+
+interface PracticeProblem {
+  question: string;
+  answer: string;
+  hint?: string;
+}
 
 interface Article {
   id: string;
@@ -16,12 +23,53 @@ interface Article {
   updated_at: string;
   meta_description: string | null;
   meta_keywords: string | null;
+  practice_problems: PracticeProblem[] | null;
+  tags: string[] | null;
 }
 
 interface TableOfContentsItem {
   level: number;
   text: string;
   id: string;
+}
+
+function parsePracticeProblems(raw: unknown): PracticeProblem[] | null {
+  if (!raw) return null;
+
+  let data: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!Array.isArray(data)) {
+    return null;
+  }
+
+  const normalized = data
+    .map((item) => {
+      if (item && typeof item === 'object') {
+        const record = item as Record<string, unknown>;
+        const question = typeof record.question === 'string' ? record.question : null;
+        const answerValue = record.answer;
+        const answer =
+          typeof answerValue === 'string' || typeof answerValue === 'number'
+            ? String(answerValue)
+            : null;
+        const hint = typeof record.hint === 'string' ? record.hint : undefined;
+
+        if (question && answer) {
+          return { question, answer, hint } as PracticeProblem;
+        }
+      }
+      return null;
+    })
+    .filter((item): item is PracticeProblem => item !== null);
+
+  return normalized.length > 0 ? normalized : null;
 }
 
 export function ArticlePage() {
@@ -50,7 +98,11 @@ export function ArticlePage() {
 
         if (err) throw err;
 
-        setArticle(data);
+        setArticle({
+          ...data,
+          practice_problems: parsePracticeProblems(data.practice_problems),
+          tags: Array.isArray(data.tags) ? data.tags : null
+        });
 
         const { data: categoryData } = await supabase
           .from('categories')
@@ -170,6 +222,10 @@ export function ArticlePage() {
             <div className="prose prose-lg max-w-none mb-12">
               <ContentRenderer content={article.content} />
             </div>
+
+            {article.practice_problems && article.practice_problems.length > 0 && (
+              <PracticeQuiz problems={article.practice_problems} />
+            )}
 
             {relatedArticles.length > 0 && (
               <section className="mt-12 pt-12 border-t border-gray-200">

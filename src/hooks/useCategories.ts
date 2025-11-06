@@ -9,6 +9,8 @@ export interface Category {
   display_order: number;
   created_at: string;
   updated_at: string;
+  icon: string | null;
+  color: string | null;
 }
 
 export function useCategories() {

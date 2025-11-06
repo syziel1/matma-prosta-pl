@@ -16,27 +16,44 @@ interface Article {
   meta_keywords: string;
   status: 'draft' | 'published' | 'archived';
   is_featured: boolean;
+  practice_problems: any;
+  tags: string[] | null;
 }
+
+const createEmptyArticle = (): Article => ({
+  title: '',
+  slug: '',
+  content: '',
+  category_id: '',
+  meta_description: '',
+  meta_keywords: '',
+  status: 'draft',
+  is_featured: false,
+  practice_problems: null,
+  tags: null
+});
 
 export function AdminArticleEditor() {
   const { articleId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { categories } = useCategories();
-  const [article, setArticle] = useState<Article>({
-    title: '',
-    slug: '',
-    content: '',
-    category_id: '',
-    meta_description: '',
-    meta_keywords: '',
-    status: 'draft',
-    is_featured: false
-  });
+  const [article, setArticle] = useState<Article>(createEmptyArticle());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(articleId ? true : false);
   const [showPreview, setShowPreview] = useState(false);
+  const [practiceProblemsText, setPracticeProblemsText] = useState('');
+  const [tagsText, setTagsText] = useState('');
+
+  useEffect(() => {
+    if (!articleId || articleId === 'nowy') {
+      setArticle(createEmptyArticle());
+      setPracticeProblemsText('');
+      setTagsText('');
+      setLoading(false);
+    }
+  }, [articleId]);
 
   useEffect(() => {
     if (articleId && articleId !== 'nowy') {
@@ -49,7 +66,15 @@ export function AdminArticleEditor() {
             .single();
 
           if (err) throw err;
-          setArticle(data);
+          setArticle({
+            ...data,
+            practice_problems: data.practice_problems ?? null,
+            tags: Array.isArray(data.tags) ? data.tags : null
+          });
+          setPracticeProblemsText(
+            data.practice_problems ? JSON.stringify(data.practice_problems, null, 2) : ''
+          );
+          setTagsText(Array.isArray(data.tags) ? data.tags.join(', ') : '');
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Failed to load article');
         } finally {
@@ -85,11 +110,39 @@ export function AdminArticleEditor() {
 
       if (!user) throw new Error('Not authenticated');
 
+      let practiceProblems = null;
+      if (practiceProblemsText.trim()) {
+        try {
+          const parsed = JSON.parse(practiceProblemsText);
+          if (!Array.isArray(parsed)) {
+            throw new Error('Practice problems must be an array');
+          }
+          practiceProblems = parsed;
+        } catch (err) {
+          throw new Error('Niepoprawny format JSON w polu zadań. Upewnij się, że wklejasz poprawny JSON.');
+        }
+      }
+
+      const tagsArray = tagsText
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+      const tags = tagsArray.length > 0 ? tagsArray : null;
+
+      setArticle(prev => ({
+        ...prev,
+        practice_problems: practiceProblems,
+        tags,
+        status
+      }));
+
       if (article.id) {
         const { error: err } = await supabase
           .from('articles')
           .update({
             ...article,
+            practice_problems: practiceProblems,
+            tags,
             status,
             updated_at: new Date().toISOString()
           })
@@ -101,6 +154,8 @@ export function AdminArticleEditor() {
           .from('articles')
           .insert([{
             ...article,
+            practice_problems: practiceProblems,
+            tags,
             status,
             author_id: user.id,
             created_at: new Date().toISOString()
@@ -220,6 +275,33 @@ export function AdminArticleEditor() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition font-mono text-sm"
                   placeholder="Wpisz zawartość artykułu (markdown + LaTeX)"
                   rows={20}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Zadania praktyczne (JSON)
+                  <span className="block text-xs text-gray-500 font-normal mt-1">
+                    Wklej tablicę JSON z zadaniami i odpowiedziami.
+                  </span>
+                </label>
+                <textarea
+                  value={practiceProblemsText}
+                  onChange={(e) => setPracticeProblemsText(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition font-mono text-sm"
+                  placeholder='[\n  {"question":"...","answer":"...","hint":"..."}\n]'
+                  rows={8}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tagi (oddzielone przecinkami)</label>
+                <input
+                  type="text"
+                  value={tagsText}
+                  onChange={(e) => setTagsText(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="np. logarytmy, funkcje"
                 />
               </div>
 

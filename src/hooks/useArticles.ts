@@ -15,6 +15,8 @@ export interface Article {
   is_featured: boolean;
   created_at: string;
   updated_at: string;
+  practice_problems: any;
+  tags: string[] | null;
   category?: { name: string; slug: string };
 }
 
