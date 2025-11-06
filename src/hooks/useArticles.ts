@@ -92,17 +92,29 @@ export function useSearchArticles(query: string, isAdmin: boolean = false) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!query.trim()) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      setResults([]);
+      return;
+    }
+
+    const sanitizedQuery = sanitizeSearchQuery(trimmedQuery);
+    if (!sanitizedQuery) {
       setResults([]);
       return;
     }
 
     const timer = setTimeout(async () => {
       try {
+        setError(null);
+
+        const likePattern = `%${escapeForIlike(sanitizedQuery)}%`;
+        const orFilter = `title.ilike.${likePattern},content.ilike.${likePattern}`;
+
         let search = supabase
           .from('articles')
           .select('*')
-          .or(`title.ilike.%${query}%,content.ilike.%${query}%`);
+          .or(orFilter);
 
         if (!isAdmin) {
           search = search.eq('status', 'published');
@@ -167,4 +179,21 @@ export function useRelatedArticles(articleId: string) {
   }, [articleId]);
 
   return { articles, loading, error };
+}
+
+const MAX_SEARCH_LENGTH = 100;
+
+function sanitizeSearchQuery(rawQuery: string): string {
+  const normalized = rawQuery
+    .normalize('NFKC')
+    .slice(0, MAX_SEARCH_LENGTH)
+    .replace(/[(),]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return normalized;
+}
+
+function escapeForIlike(value: string): string {
+  return value.replace(/[\\%_]/g, (match) => `\\${match}`);
 }

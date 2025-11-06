@@ -42,9 +42,12 @@ export function CategoryPage() {
         if (catError) throw catError;
         setCategory(catData);
 
+        const rangeStart = (page - 1) * ARTICLES_PER_PAGE;
+        const rangeEnd = page * ARTICLES_PER_PAGE - 1;
+
         let query = supabase
           .from('articles')
-          .select('*')
+          .select('*', { count: 'exact' })
           .eq('category_id', catData.id)
           .order('created_at', { ascending: false });
 
@@ -53,12 +56,13 @@ export function CategoryPage() {
         }
 
         const { data: articlesData, error: articlesError, count } = await query
-          .range((page - 1) * ARTICLES_PER_PAGE, page * ARTICLES_PER_PAGE - 1);
+          .range(rangeStart, rangeEnd);
 
         if (articlesError) throw articlesError;
 
         setArticles(articlesData || []);
-        setTotalPages(Math.ceil((count || 0) / ARTICLES_PER_PAGE));
+        const computedTotalPages = count ? Math.max(1, Math.ceil(count / ARTICLES_PER_PAGE)) : 1;
+        setTotalPages(computedTotalPages);
       } catch (err) {
         console.error('Failed to fetch category:', err);
       } finally {
