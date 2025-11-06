@@ -20,14 +20,12 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
     const breadcrumbs: Breadcrumb[] = [{ label: 'Strona główna', path: '/' }];
 
     let currentPath = '';
-    pathSegments.forEach((segment, index) => {
+    pathSegments.forEach((segment) => {
       currentPath += `/${segment}`;
       const label = decodeURIComponent(segment).replace(/-/g, ' ');
       const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
 
-      if (index < pathSegments.length - 1) {
-        breadcrumbs.push({ label: capitalizedLabel, path: currentPath });
-      }
+      breadcrumbs.push({ label: capitalizedLabel, path: currentPath });
     });
 
     return breadcrumbs;
