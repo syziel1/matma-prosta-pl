@@ -11,7 +11,6 @@ export function ContentRenderer({ content }: ContentRendererProps) {
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     const mathBlockRegex = /\$\$\n([\s\S]*?)\n\$\$/g;
-    const inlineMathRegex = /\$([^\$\n]+?)\$/g;
 
     let match;
     const mathBlocks: Array<{ start: number; end: number; latex: string }> = [];
@@ -28,7 +27,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
       const beforeBlock = content.substring(lastIndex, block.start);
       const lines = beforeBlock.split('\n');
 
-      lines.forEach((line, lineIndex) => {
+      lines.forEach((line) => {
         if (line.startsWith('# ')) {
           parts.push(<h1 key={`h1-${parts.length}`} className="text-4xl font-bold mt-8 mb-4">{line.substring(2)}</h1>);
         } else if (line.startsWith('## ')) {
@@ -50,7 +49,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
     const remaining = content.substring(lastIndex);
     if (remaining.trim()) {
       const lines = remaining.split('\n');
-      lines.forEach((line, lineIndex) => {
+      lines.forEach((line) => {
         if (line.startsWith('# ')) {
           parts.push(<h1 key={`h1-${parts.length}`} className="text-4xl font-bold mt-8 mb-4">{line.substring(2)}</h1>);
         } else if (line.startsWith('## ')) {

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Breadcrumbs } from '../components/Breadcrumbs';

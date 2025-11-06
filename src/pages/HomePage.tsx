@@ -1,16 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { LucideIcon } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useCategories } from '../hooks/useCategories';
-import { useSearchArticles } from '../hooks/useArticles';
 
 export function HomePage() {
   const { categories, loading: categoriesLoading } = useCategories();
   const [searchQuery, setSearchQuery] = useState('');
-  const { results: searchResults } = useSearchArticles(searchQuery);
   const navigate = useNavigate();
-  const SearchIcon = LucideIcons.Search;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +14,6 @@ export function HomePage() {
       navigate(`/szukaj?q=${encodeURIComponent(searchQuery)}`);
     }
   };
-
-  const mainCategories = categories.slice(0, 8);
 
   return (
     <div>
@@ -45,7 +39,7 @@ export function HomePage() {
                 type="submit"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition"
               >
-                <SearchIcon className="w-6 h-6" />
+                <Search className="w-6 h-6" />
               </button>
             </div>
           </form>
@@ -63,49 +57,23 @@ export function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {mainCategories.map((category) => {
-              const IconComponent = category.icon
-                ? (LucideIcons as Record<string, LucideIcon>)[category.icon]
-                : null;
-              const accentColor = category.color || '#2563eb';
-              const iconBackground = category.color ? `${category.color}22` : 'rgba(59,130,246,0.12)';
-
-              return (
-                <Link
-                  key={category.id}
-                  to={`/kategoria/${category.slug}`}
-                  className="group bg-white rounded-lg shadow-md hover:shadow-xl transition p-6 border border-gray-100 hover:border-blue-300"
-                  style={{ borderColor: category.color ? `${category.color}33` : undefined }}
-                >
-                  <div
-                    className="w-12 h-12 rounded-lg mb-4 flex items-center justify-center transition"
-                    style={{
-                      backgroundColor: iconBackground,
-                      color: accentColor
-                    }}
-                  >
-                    {IconComponent ? (
-                      <IconComponent className="w-6 h-6" />
-                    ) : (
-                      <span className="text-lg font-semibold">
-                        {category.icon ? category.icon.charAt(0).toUpperCase() : category.name.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                  <h3
-                    className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition"
-                    style={category.color ? { color: accentColor } : undefined}
-                  >
-                    {category.name}
-                  </h3>
-                  {category.description && (
-                    <p className="text-gray-600 text-sm line-clamp-2">
-                      {category.description}
-                    </p>
-                  )}
-                </Link>
-              );
-            })}
+            {categories.slice(0, 8).map((category) => (
+              <Link
+                key={category.id}
+                to={`/kategoria/${category.slug}`}
+                className="group bg-white rounded-lg shadow-md hover:shadow-xl transition p-6 border border-gray-100 hover:border-blue-300"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-lg mb-4 group-hover:bg-blue-600 transition" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition">
+                  {category.name}
+                </h3>
+                {category.description && (
+                  <p className="text-gray-600 text-sm line-clamp-2">
+                    {category.description}
+                  </p>
+                )}
+              </Link>
+            ))}
           </div>
         )}
       </section>
